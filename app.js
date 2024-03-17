@@ -1,70 +1,47 @@
-const http = require("http");
+const express = require("express");
+const author = require("./routers/author");
 
-const server = http.createServer();
+const server = express();
 
-server.on("request", (req, res) => {
-  authenticate(req, res, (req, res) => {
-    if (req.url === "/books") books(req, res);
-    else if (req.url === "/books/authors") bookAuthors(req, res);
-    res.end();
-  });
+server.use(authenticate);
+
+server.get("/books", (req, res) => {
+  res.send("Getting book");
 });
 
-server.listen(8900, "localhost");
+server.post("/books", (_, res) => {
+  res.send("Creating book");
+});
 
-/**
- * Book controller
- * @param {http.IncomingMessage} req
- * @param {http.ServerResponse} res
- */
-function books(req, res) {
-  let data = "Nothing to do with book";
-  if (req.method === "GET") data = "Getting book";
-  if (req.method === "POST") data = "Creating book";
-  if (req.method === "PUT") data = "Updating book";
-  if (req.method === "PATCH") data = "Updating book partially";
-  if (req.method === "DELETE") data = "Deleting book";
-  res.setHeader("Content-Type", "text/plain");
-  res.setHeader("Content-Length", data.length);
-  res.write(data);
-  res.end();
-}
+server.put("/books", (_, res) => {
+  res.send("Updating book");
+});
 
-/**
- * BookAuthor controller
- * @param {http.IncomingMessage} req
- * @param {http.ServerResponse} res
- */
-function bookAuthors(req, res) {
-  let data = "Nothing to do with author";
-  if (req.method === "GET") data = "Getting author";
-  if (req.method === "POST") data = "Creating author";
-  if (req.method === "PUT") data = "Updating author";
-  if (req.method === "PATCH") data = "Updating author partially";
-  if (req.method === "DELETE") data = "Deleting author";
-  res.setHeader("Content-Type", "text/plain");
-  res.setHeader("Content-Length", data.length);
-  res.write(data);
-  res.end();
-}
+server.patch("/books", (_, res) => {
+  res.send("Updating book partially");
+});
+
+server.delete("/books", (_, res) => {
+  res.send("Deleting book");
+});
+
+server.use("/books/author", author);
+
+server.listen(8900, "localhost", () => {
+  console.log("Server started");
+});
 
 /**
  * Auth middleware
- * @param {http.IncomingMessage} req
- * @param {http.ServerResponse} res
- * @param {http.RequestListener} next
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
  */
 function authenticate(req, res, next) {
   const username = req.headers["username"];
   const password = req.headers["password"];
   if (username && password) {
     req.user = { username, password };
-    next(req, res);
-  } else {
-    const data = "Authentication required";
-    res.setHeader("Content-Type", "text/plain");
-    res.setHeader("Content-Length", data.length);
-    res.write(data);
-    res.end();
-  }
+    next();
+  } else res.status(401).send("Authentication required");
 }
