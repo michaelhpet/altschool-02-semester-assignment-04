@@ -3,6 +3,7 @@ const author = require("./routers/author");
 
 const server = express();
 
+server.use(log);
 server.use(authenticate);
 
 server.get("/books", (req, res) => {
@@ -44,4 +45,15 @@ function authenticate(req, res, next) {
     req.user = { username, password };
     next();
   } else res.status(401).send("Authentication required");
+}
+
+/**
+ * Logger middleware
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+function log(req, res, next) {
+  console.log(`Request from ${req.ip} to ${req.method} ${req.url}`);
+  next();
 }
